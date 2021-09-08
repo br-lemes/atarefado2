@@ -1,0 +1,4 @@
+body { padding-top: 80px; }
+.navbar-header { padding-right: 15px; }
+.navbar-brand { padding-top: 9px; padding-bottom: 9px; }
+.navbar-brand > img { display: inline; }
