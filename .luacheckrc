@@ -1,3 +1,4 @@
+files["json.lua"] = {ignore = {"212", "213"}}
 new_globals = {
 	_DEBUG = { },
 	lfs = {
