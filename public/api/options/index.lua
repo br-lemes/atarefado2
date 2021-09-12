@@ -7,11 +7,7 @@ local level = DEBUG and 1 or 0
 local json = require("json")
 
 local function get(eng)
-	local result = { }
-	for name, value in eng.db:urows("SELECT name, value FROM options;") do
-		result[name] = value
-	end
-	mg.send_http_ok(mg.get_mime_type("type.json"), json.encode(result))
+	mg.send_http_ok(mg.get_mime_type("type.json"), json.encode(eng.get_options()))
 end
 
 local function post(eng)

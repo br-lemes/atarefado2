@@ -43,6 +43,15 @@ local function has_tag(task, tag)
 	return result
 end
 
+local function get_options()
+	local result = { }
+	for name, value in db:urows("SELECT name, value FROM options;") do
+		if name == "tag" then value = tonumber(value) end
+		result[name] = value
+	end
+	return result
+end
+
 assert(db:execute("BEGIN;"))
 if not has_table("tagnames") then
 	assert(db:execute([[
@@ -103,8 +112,9 @@ end
 assert(db:execute("END;"))
 
 return {
-	db         = db,
-	has_table  = has_table,
-	has_id     = has_id,
-	has_tag    = has_tag,
+	db          = db,
+	has_table   = has_table,
+	has_id      = has_id,
+	has_tag     = has_tag,
+	get_options = get_options,
 }
