@@ -6,15 +6,21 @@ local level = DEBUG and 1 or 0
 
 local json = require("json")
 
-local function get(eng)
+local function get(eng, id)
+	local sqlstr
+	if not id then
+		sqlstr = "SELECT id, name FROM tagnames WHERE id > 38 ORDER BY name;"
+	else
+		sqlstr = string.format("SELECT id, name FROM tagnames WHERE id=%d;", id)
+	end
 	local result = { }
-	for row in eng.db:nrows("SELECT id, name FROM tagnames WHERE id > 38 ORDER BY name;") do
+	for row in eng.db:nrows(sqlstr) do
 		table.insert(result, row)
 	end
 	mg.send_http_ok(mg.get_mime_type("type.json"), json.encode(result))
 end
 
-local function post(eng)
+local function post(eng, id)
 	local request_body = mg.read()
 	if not request_body then
 		errno = 400
@@ -26,7 +32,7 @@ local function post(eng)
 	end
 	local data = json.decode(request_body)
 	for k, _ in pairs(data) do
-		if k ~= "id" and k ~= "name" then
+		if k ~= "name" then
 			errno = 400
 			error("Invalid data", level)
 		end
@@ -36,29 +42,24 @@ local function post(eng)
 		error("Invalid data", level)
 	end
 	local result = { }
-	if data.id then
-		if not tostring(data.id):match("^%d+$") then
+	if id then
+		if id <= 38 then
 			errno = 400
 			error("Invalid data", level)
 		end
-		data.id = tonumber(data.id)
-		if data.id <= 38 then
-			errno = 400
-			error("Invalid data", level)
-		end
-		if eng.has_id(data.id, "tagnames") then
+		if eng.has_id(id, "tagnames") then
 			local query = eng.db:prepare("UPDATE tagnames SET name=? WHERE id=?;")
-			query:bind_values(data.name, data.id)
+			query:bind_values(data.name, id)
 			query:step()
 			query:finalize()
-			result.id   = data.id
+			result.id   = id
 			result.name = data.name
 		else
 			local query = eng.db:prepare("INSERT INTO tagnames VALUES(?, ?);")
-			query:bind_values(data.id, data.name)
+			query:bind_values(id, data.name)
 			query:step()
 			query:finalize()
-			result.id   = data.id
+			result.id   = id
 			result.name = data.name
 		end
 	else
@@ -75,14 +76,18 @@ end
 local method = { GET = get, POST = post }
 
 local status, errmsg = pcall(function()
-	if mg.request_info.path_info then
-		errno = 404
-		error("Not found", level)
-	end
 	if not method[mg.request_info.request_method] then
 		errno = 405
 		error("Method not allowed", level)
 	end
-	method[mg.request_info.request_method](require("engine"))
+	local id
+	if mg.request_info.path_info then
+		id = tonumber(string.match(mg.request_info.path_info, ("^/(%d+)/?$")))
+		if not id then
+			errno = 404
+			error("Not found", level)
+		end
+	end
+	method[mg.request_info.request_method](require("engine"), id)
 end)
 if not status then mg.send_http_error(errno, errmsg) end
