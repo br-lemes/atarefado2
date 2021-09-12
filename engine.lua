@@ -1,8 +1,24 @@
 
 local sqlite3 = sqlite3 or require("lsqlite3")
 
+-- assert time calculations (os dependent)
+
+assert(
+	os.time{day = -1, month = 1, year = 2013}
+	==
+	os.time{day = 30, month = 12, year = 2012}
+)
+
+assert(
+	os.time{day = 32, month = 12, year = 2012}
+	==
+	os.time{day = 1, month = 1, year = 2013}
+)
+
 local db, _, errmsg = sqlite3.open("database.sqlite3")
 if not db then error(errmsg) end
+
+local dateformat = "%Y-%m-%d"
 
 -- check if database has the given table
 -- return: true or false
@@ -43,6 +59,7 @@ local function has_tag(task, tag)
 	return result
 end
 
+-- return a table with options
 local function get_options()
 	local result = { }
 	for name, value in db:urows("SELECT name, value FROM options;") do
@@ -50,6 +67,49 @@ local function get_options()
 		result[name] = value
 	end
 	return result
+end
+
+-- return true if d is an unespecified time
+local function isanytime(d)
+	return not d or d == '' or d == 'anytime'
+end
+
+-- return true if d is tomorrow
+local function istomorrow(d)
+	local tomorrow = os.date("*t")
+	tomorrow.day = tomorrow.day + 1
+	return d == os.date(dateformat, os.time(tomorrow))
+end
+
+-- return true if d is in the future but not tomorrow
+local function isfuture(d)
+	return not isanytime(d) and not istomorrow(d) and
+		d > os.date(dateformat)
+end
+
+-- return true if d is today
+local function istoday(d)
+	return d == os.date(dateformat)
+end
+
+-- return true if d is yesterday
+local function isyesterday(d)
+	local yesterday = os.date("*t")
+	yesterday.day = yesterday.day -1
+	return d == os.date(dateformat, os.time(yesterday))
+end
+
+-- return true if d is in the past but not yesterday
+local function islate(d)
+	return not isanytime(d) and not isyesterday(d) and
+		d < os.date(dateformat)
+end
+
+-- return the number of days in a month
+local function daysmonth(month, year)
+	while month > 12 do month = month - 12 end
+	return month == 2 and (year % 4 == 0 and (year % 100 ~= 0 or year % 400 == 0)) and 29
+		or ('\31\28\31\30\31\30\31\31\30\31\30\31'):byte(month)
 end
 
 assert(db:execute("BEGIN;"))
@@ -112,9 +172,17 @@ end
 assert(db:execute("END;"))
 
 return {
+	dateformat  = dateformat,
 	db          = db,
 	has_table   = has_table,
 	has_id      = has_id,
 	has_tag     = has_tag,
 	get_options = get_options,
+	isanytime   = isanytime,
+	istomorrow  = istomorrow,
+	isfuture    = isfuture,
+	istoday     = istoday,
+	isyesterday = isyesterday,
+	islate      = islate,
+	daysmonth   = daysmonth,
 }
