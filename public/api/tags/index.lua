@@ -21,14 +21,14 @@ local function get(eng, id)
 end
 
 local function post(eng, id)
+	if mg.request_info.content_length > 1024 then
+		errno = 400
+		error("Too large data", level)
+	end
 	local request_body = mg.read()
 	if not request_body then
 		errno = 400
 		error("No data", level)
-	end
-	if #request_body > 1024 then
-		errno = 400
-		error("Too large data", level)
 	end
 	local data = json.decode(request_body)
 	for k, _ in pairs(data) do
