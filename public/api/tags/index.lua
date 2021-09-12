@@ -45,7 +45,7 @@ local function post(eng, id)
 	if id then
 		if id <= 38 then
 			errno = 400
-			error("Invalid data", level)
+			error("Invalid tag", level)
 		end
 		if eng.has_id(id, "tagnames") then
 			local query = eng.db:prepare("UPDATE tagnames SET name=? WHERE id=?;")
@@ -73,7 +73,25 @@ local function post(eng, id)
 	mg.send_http_ok(mg.get_mime_type("type.json"), json.encode(result))
 end
 
-local method = { GET = get, POST = post }
+local function delete(eng, id)
+	if id <= 38 then
+		errno = 400
+		error("Invalid tag")
+	end
+	if not eng.has_id(id, "tagnames") then
+		errno = 400
+		error("Invalid tag")
+	end
+	for row in eng.db:nrows("SELECT id FROM tasks;") do
+		eng.db:execute(string.format(
+			"DELETE FROM tags WHERE task=%d and tag=%d;",
+			row.id, id))
+	end
+	eng.db:execute(string.format("DELETE FROM tagnames WHERE id=%d;", id))
+	get(eng)
+end
+
+local method = { GET = get, POST = post, DELETE = delete }
 
 local status, errmsg = pcall(function()
 	if not method[mg.request_info.request_method] then
