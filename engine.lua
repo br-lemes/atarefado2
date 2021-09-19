@@ -42,8 +42,13 @@ local function has_table(tname)
 end
 
 local function test_has_table() -- luacheck: no unused
-	for _,v in ipairs{ "tagnames", "tags", "tasks", "options" } do
+	local truelist = { "tagnames", "tags", "tasks", "options" }
+	local falselist = { "pay", "dress", "sauna", "hook" }
+	for _,v in ipairs(truelist) do
 		assert(has_table(v), string.format("expected '%s' table not found", v))
+	end
+	for _,v in ipairs(falselist) do
+		assert(not has_table(v), string.format("unexpected '%s' table found", v))
 	end
 end
 
