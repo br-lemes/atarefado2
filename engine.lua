@@ -32,6 +32,12 @@ local function has_table(tname)
 	return result
 end
 
+local function test_has_table() -- luacheck: no unused
+	for _,v in ipairs{ "tagnames", "tags", "tasks", "options" } do
+		assert(has_table(v), string.format("expected '%s' table not found", v))
+	end
+end
+
 -- check if the given id has in the given table
 -- return: true or false
 local function has_id(id, tname)
@@ -47,6 +53,22 @@ local function has_id(id, tname)
 	return result
 end
 
+local function test_has_id() -- luacheck: no unused
+	local expected = "expected id number '%d' not found in table '%s'"
+	local unexpected = "unexpected id number '%d' found in table '%s'"
+	local list = { tagnames = 38, tasks = 0, options = 8 }
+	for k,v in pairs(list) do
+		if v == 0 then
+			assert(not has_id(1, k), string.format(unexpected, 1, k))
+		else
+			for i = 1, v do
+				assert(has_id(i, k), string.format(expected, i, k))
+			end
+			assert(not has_id(v + 1, k), string.format(unexpected, v + 1, k))
+		end
+	end
+end
+
 -- check if the given task has the given tag
 -- return: true or false
 local function has_tag(task, tag)
@@ -59,6 +81,11 @@ local function has_tag(task, tag)
 	return result
 end
 
+local function test_has_tag() -- luacheck: no unused
+	assert(not has_tag(1, 1), "has_tag: unexpected tag")
+	-- WARNING: there is no task to test
+end
+
 -- return a table with options
 local function get_options()
 	local result = { }
@@ -69,6 +96,14 @@ local function get_options()
 	return result
 end
 
+local function test_get_options() -- luacheck: no unused
+	local o = get_options()
+	for _, v in pairs{ "anytime", "tomorrow", "future", "today", "yesterday", "late" } do
+		assert(o[v] == "ON", v .. " ~= 'ON'")
+	end
+	assert(o.tag == 1, "tag ~= 1")
+end
+
 -- return true if d is a valid date else return nil or false
 local function isdate(d)
 	local t = { }
@@ -77,9 +112,21 @@ local function isdate(d)
 		os.date(dateformat, os.time(t)) == d
 end
 
+local function test_isdate() -- luacheck: no unused
+	assert(not isdate('2020-00-01'), "accepting invalid date")
+	assert(isdate('2020-01-01'), "not accepting valid date")
+	assert(not isdate('01-01-2020'), "accepting invalid format")
+end
+
 -- return true if d is an unespecified time
 local function isanytime(d)
 	return not d or d == '' or d == 'anytime'
+end
+local function test_isanytime() -- luacheck: no unused
+	assert(isanytime(), "not accepting nil")
+	assert(isanytime(""), "not accepting empty string")
+	assert(isanytime("anytime"), "not accepting 'anytime'")
+	assert(not isanytime(true), "accepting 'true'")
 end
 
 -- return true if d is tomorrow
@@ -89,10 +136,71 @@ local function istomorrow(d)
 	return d == os.date(dateformat, os.time(tomorrow))
 end
 
+local accept = {
+	late = "accepting late (before yesterday)",
+	yesterday = "accepting yesterday",
+	today = "accepting today",
+	tomorrow = "accepting tomorrow",
+	future = "accepting future (after tomorrow)"
+}
+
+local reject = {
+	late = "not " .. accept.late,
+	yesterday = "not " .. accept.yesterday,
+	today = "not " .. accept.today,
+	tomorrow = "not " .. accept.tomorrow,
+	future = "not " .. accept.future
+}
+
+
+local function get_today()
+	return os.date(dateformat)
+end
+
+local function get_late()
+	local d = os.date("*t")
+	d.day = d.day - 2
+	return os.date(dateformat, os.time(d))
+end
+
+local function get_yesterday()
+	local d = os.date("*t")
+	d.day = d.day - 1
+	return os.date(dateformat, os.time(d))
+end
+
+local function get_tomorrow()
+	local d = os.date("*t")
+	d.day = d.day + 1
+	return os.date(dateformat, os.time(d))
+end
+
+local function get_future()
+	local d = os.date("*t")
+	d.day = d.day + 2
+	return os.date(dateformat, os.time(d))
+end
+
+local function test_istomorrow() -- luacheck: no unused
+	assert(not istomorrow(get_late()), accept.late)
+	assert(not istomorrow(get_yesterday()), accept.yesterday)
+	assert(not istomorrow(get_today()), accept.today)
+	assert(istomorrow(get_tomorrow()), reject.tomorrow)
+	assert(not istomorrow(get_future()), accept.future)
+end
+
 -- return true if d is in the future but not tomorrow
 local function isfuture(d)
 	return not isanytime(d) and not istomorrow(d) and
 		d > os.date(dateformat)
+end
+
+local function test_isfuture() -- luacheck: no unused
+	assert(not isfuture(get_late()), accept.late)
+	assert(not isfuture(get_yesterday()), accept.yesterday)
+	assert(not isfuture(get_today()), accept.today)
+	assert(not isfuture(get_tomorrow()), accept.tomorrow)
+	assert(isfuture(get_future()), reject.future)
 end
 
 -- return true if d is today
@@ -100,11 +208,25 @@ local function istoday(d)
 	return d == os.date(dateformat)
 end
 
+local function test_istoday() -- luacheck: no unused
+	assert(not istoday(get_late()), accept.late)
+	assert(not istoday(get_yesterday()), accept.yesterday)
+	assert(istoday(get_today()), reject.today)
+	assert(not istoday(get_tomorrow()), accept.tomorrow)
+	assert(not istoday(get_future()), accept.future)
+end
+
 -- return true if d is yesterday
 local function isyesterday(d)
-	local yesterday = os.date("*t")
-	yesterday.day = yesterday.day -1
-	return d == os.date(dateformat, os.time(yesterday))
+	return d == get_yesterday()
+end
+
+local function test_isyesterday() -- luacheck: no unused
+	assert(not isyesterday(get_late()), accept.late)
+	assert(isyesterday(get_yesterday()), reject.yesterday)
+	assert(not isyesterday(get_today()), accept.today)
+	assert(not isyesterday(get_tomorrow()), accept.tomorrow)
+	assert(not isyesterday(get_future()), accept.future)
 end
 
 -- return true if d is in the past but not yesterday
@@ -113,11 +235,26 @@ local function islate(d)
 		d < os.date(dateformat)
 end
 
+local function test_islate() -- luacheck: no unused
+	assert(islate(get_late()), reject.late)
+	assert(not islate(get_yesterday()), accept.yesterday)
+	assert(not islate(get_today()), accept.today)
+	assert(not islate(get_tomorrow()), accept.tomorrow)
+	assert(not islate(get_future()), accept.future)
+end
+
 -- return the number of days in a month
 local function daysmonth(month, year)
 	while month > 12 do month = month - 12 end
 	return month == 2 and (year % 4 == 0 and (year % 100 ~= 0 or year % 400 == 0)) and 29
 		or ('\31\28\31\30\31\30\31\31\30\31\30\31'):byte(month)
+end
+
+local function test_daysmonth() -- luacheck: no unused
+	for i, v in pairs{ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 } do
+		assert(daysmonth(i, 2020) == v, string.format("wrong result for 2020-%02d", i))
+	end
+	assert(daysmonth(2, 2019) == 28, "wrong result for 2019-02")
 end
 
 assert(db:execute("BEGIN;"))
