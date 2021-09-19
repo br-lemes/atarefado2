@@ -1,6 +1,10 @@
 
 local sqlite3 = sqlite3 or require("lsqlite3")
 
+local DEBUG = true
+if mg then DEBUG = string.find(mg.document_root, "/public$") end
+local level = DEBUG and 1 or 0
+
 -- assert time calculations (os dependent)
 
 assert(
@@ -16,16 +20,21 @@ assert(
 )
 
 local db, _, errmsg = sqlite3.open("database.sqlite3")
-if not db then error(errmsg) end
+if not db then error(errmsg, level) end
 
 local dateformat = "%Y-%m-%d"
+
+local function exec(sql)
+	local r = db:exec(sql)
+	if r ~= sqlite3.OK then error(db:errmsg(), level == 1 and 2 or level) end
+end
 
 -- check if database has the given table
 -- return: true or false
 local function has_table(tname)
 	local query = db:prepare(
 		'SELECT name FROM sqlite_master WHERE type="table" AND name=?')
-	if not query then error(db:errmsg()) end
+	if not query then error(db:errmsg(), level) end
 	assert(query:bind_values(tname) == sqlite3.OK)
 	local result = query:step() == sqlite3.ROW and query:get_value(0) == tname
 	query:finalize()
@@ -42,11 +51,11 @@ end
 -- return: true or false
 local function has_id(id, tname)
 	if not has_table(tname) then
-		error(string.format("no such table: %s", tname))
+		error(string.format("no such table: %s", tname), level)
 	end
 	local query = db:prepare(string.format(
 		"SELECT id FROM %s WHERE id=?", tname))
-	if not query then error(db:errmsg()) end
+	if not query then error(db:errmsg(), level) end
 	assert(query:bind_values(id) == sqlite3.OK)
 	local result = query:step() == sqlite3.ROW and query:get_value(0) == id
 	query:finalize()
@@ -74,7 +83,7 @@ end
 local function has_tag(task, tag)
 	local query = db:prepare(
 		"SELECT task FROM tags WHERE task=? and tag=?")
-	if not query then error(db:errmsg()) end
+	if not query then error(db:errmsg(), level) end
 	assert(query:bind_values(task, tag) == sqlite3.OK)
 	local result = query:step() == sqlite3.ROW and query:get_value(0) == task
 	query:finalize()
@@ -257,64 +266,64 @@ local function test_daysmonth() -- luacheck: no unused
 	assert(daysmonth(2, 2019) == 28, "wrong result for 2019-02")
 end
 
-assert(db:execute("BEGIN;"))
+exec("BEGIN;")
 if not has_table("tagnames") then
-	assert(db:execute([[
+	exec([[
 		CREATE TABLE tagnames (
 			id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 			name TEXT NOT NULL
-		);]]))
+		);]])
 	for _, v in ipairs{
 			"Dom", "Seg", "Ter", "Qua",
 			"Qui", "Sex", "Sáb"
 		} do
-		assert(db:execute(string.format(
-			"INSERT INTO tagnames VALUES(NULL, %q);", v)))
+		exec(string.format(
+			"INSERT INTO tagnames VALUES(NULL, %q);", v))
 	end
 	for i = 1, 31 do
-		assert(db:execute(string.format(
+		exec(string.format(
 			'INSERT INTO tagnames VALUES(NULL, "%02d");',
-			i)))
+			i))
 	end
 end
 
 if not has_table("tags") then
-	assert(db:execute([[
+	exec([[
 		CREATE TABLE tags (
 			task INTEGER NOT NULL,
 			tag INTEGER NOT NULL
-		);]]))
+		);]])
 end
 
 if not has_table("tasks") then
-	assert(db:execute([[
+	exec([[
 		CREATE TABLE tasks (
 			id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 			name TEXT NOT NULL,
 			date TEXT,
 			comment TEXT,
 			recurrent INTEGER NOT NULL
-		);]]))
+		);]])
 end
 
 if not has_table("options") then
-	assert(db:execute([[
+	exec([[
 		CREATE TABLE options (
 			id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 			name TEXT NOT NULL,
 			value TEXT
-		);]]))
+		);]])
 	local optfmt = "INSERT INTO options VALUES(NULL, %q, %q);"
 	for _, v in ipairs{
 			"anytime", "tomorrow", "future",
 			"today", "yesterday", "late"
 		} do
-		assert(db:execute(string.format(optfmt, v, "ON")))
+		exec(string.format(optfmt, v, "ON"))
 	end
-	assert(db:execute(string.format(optfmt, "tag", "1")))
-	assert(db:execute(string.format(optfmt, "version", "1")))
+	exec(string.format(optfmt, "tag", "1"))
+	exec(string.format(optfmt, "version", "1"))
 end
-assert(db:execute("END;"))
+exec("END;")
 
 return {
 	db          = db,
