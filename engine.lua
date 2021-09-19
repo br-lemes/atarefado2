@@ -54,7 +54,7 @@ local function has_tag(task, tag)
 		"SELECT task FROM tags WHERE task=? and tag=?")
 	if not query then error(db:errmsg()) end
 	assert(query:bind_values(task, tag) == sqlite3.OK)
-	local result = query:step() == sqlite3.ROW and query.get_value(0) == task
+	local result = query:step() == sqlite3.ROW and query:get_value(0) == task
 	query:finalize()
 	return result
 end
@@ -172,7 +172,6 @@ end
 assert(db:execute("END;"))
 
 return {
-	dateformat  = dateformat,
 	db          = db,
 	has_table   = has_table,
 	has_id      = has_id,
