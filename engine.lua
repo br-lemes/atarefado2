@@ -56,7 +56,7 @@ end
 -- return: true or false
 local function has_id(id, tname)
 	if not has_table(tname) then
-		error(string.format("no such table: %s", tname), level)
+		error(string.format("No such table: %s", tname), level)
 	end
 	local query = db:prepare(string.format(
 		"SELECT id FROM %s WHERE id=?", tname))
