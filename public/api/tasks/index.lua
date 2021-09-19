@@ -13,6 +13,16 @@ local function get(eng, id)
 			"SELECT * FROM tasks WHERE id=%d;", id)) do
 			table.insert(result, row)
 		end
+		if #result == 0 then
+			errno = 404
+			error("Not found", level)
+		end
+		local tags = { }
+		for tag in eng.db:urows(string.format(
+			"SELECT tag FROM tags WHERE task=%d;", id)) do
+			table.insert(tags, tag)
+		end
+		result[1].tags = tags
 		mg.send_http_ok(mg.get_mime_type("type.json"), json.encode(result))
 		return
 	end
