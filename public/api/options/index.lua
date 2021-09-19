@@ -11,16 +11,6 @@ local function get(eng)
 end
 
 local function post(eng)
-	local ON_OFF = { ON = true, OFF = true }
-	local valid_options = {
-		anytime   = true,
-		tomorrow  = true,
-		future    = true,
-		today     = true,
-		yesterday = true,
-		late      = true,
-		tag       = true,
-	}
 	if mg.request_info.content_length > 1024 then
 		errno = 400
 		error("Too large data", level)
@@ -37,25 +27,11 @@ local function post(eng)
 			error("Invalid data", level)
 		end
 	end
-	if not valid_options[data.option] then
+	local status, errmsg = eng.set_options(data.option, data.value)
+	if not status then
 		errno = 400
-		error("Invalid option", level)
+		error(errmsg, level)
 	end
-	if data.option == "tag" then
-		data.value = tostring(data.value)
-		if not data.value:find("^%d+$") then
-			errno = 400
-			error("Invalid value", level)
-		end
-	else
-		if not ON_OFF[data.value] then
-			errno = 400
-			error("Invalid value", level)
-		end
-	end
-	eng.db:execute(string.format(
-		"UPDATE options SET value=%q WHERE name=%q;",
-		data.value, data.option))
 	get(eng)
 end
 

@@ -113,6 +113,45 @@ local function test_get_options() -- luacheck: no unused
 	assert(o.tag == 1, "tag ~= 1")
 end
 
+-- set an option
+local function set_options(option, value)
+	local valid_options = {
+		anytime   = true,
+		tomorrow  = true,
+		future    = true,
+		today     = true,
+		yesterday = true,
+		late      = true,
+		tag       = true,
+	}
+	if not valid_options[option] then
+		return nil, "Invalid option"
+	end
+	if option == "tag" then
+		value = tostring(value)
+		if not value:find("^%d+$") then
+			return nil, "Invalid value"
+		end
+	else
+		if value ~= "ON" and value ~= "OFF" then
+			return nil, "Invalid value"
+		end
+	end
+	exec(string.format("UPDATE options SET value=%q WHERE name=%q;", value, option))
+	return true
+end
+
+local function test_set_options() -- luacheck: no unused
+	assert(set_options("option", "ON") == nil, "accepting invalid option")
+	assert(set_options("tomorrow", "NO") == nil, "accepting invalid value")
+	assert(set_options("tomorrow", "OFF"), "not accepting valid value")
+	assert(set_options("tag", "ON") == nil, "accepting invalid value")
+	assert(set_options("tag", 2), "not accepting valid value")
+	local o = get_options()
+	assert(o.tomorrow == "OFF", "tomorrow ~= 'OFF'")
+	assert(o.tag == 2, "tag ~= 2")
+end
+
 -- return true if d is a valid date else return nil or false
 local function isdate(d)
 	local t = { }
@@ -331,6 +370,7 @@ return {
 	has_id      = has_id,
 	has_tag     = has_tag,
 	get_options = get_options,
+	set_options = set_options,
 	isdate      = isdate,
 	isanytime   = isanytime,
 	istomorrow  = istomorrow,
