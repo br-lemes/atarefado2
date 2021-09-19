@@ -47,6 +47,13 @@ local function get(eng, id)
 		table.insert(result, row)
 		::continue::
 	end
+	for _, row in ipairs(result) do
+		row.tags = { }
+		for tag in eng.db:urows(string.format(
+			"SELECT tag FROM tags WHERE task=%d;", row.id)) do
+			table.insert(row.tags, tag)
+		end
+	end
 	mg.send_http_ok(mg.get_mime_type("type.json"), json.encode(result))
 end
 
