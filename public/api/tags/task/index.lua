@@ -7,6 +7,10 @@ local level = DEBUG and 1 or 0
 local json = require("json")
 
 local function get(eng, id)
+	if not eng.has_id(id, 'tasks') then
+		errno = 404
+		error("Not found", level)
+	end
 	local result = { }
 	for tag in eng.db:urows(string.format(
 		"SELECT tag FROM tags WHERE task=%d;", id)) do
@@ -16,6 +20,10 @@ local function get(eng, id)
 end
 
 local function post(eng, id)
+	if not eng.has_id(id, 'tasks') then
+		errno = 404
+		error("Not found", level)
+	end
 	if mg.request_info.content_length > 1024 then
 		errno = 400
 		error("Too large data", level)
@@ -34,10 +42,6 @@ local function post(eng, id)
 		if type(k) ~= "number" then
 			errno = 400
 			error("Invalid data", level)
-		end
-		if not eng.has_id(id, 'tasks') then
-			errno = 400
-			error("Invalid task", level)
 		end
 		if not eng.has_id(v, 'tagnames') then
 			errno = 400
@@ -56,6 +60,10 @@ local function post(eng, id)
 end
 
 local function delete(eng, id)
+	if not eng.has_id(id, 'tasks') then
+		errno = 404
+		error("Not found", level)
+	end
 	if mg.request_info.content_length > 1024 then
 		errno = 400
 		error("Too large data", level)
@@ -74,10 +82,6 @@ local function delete(eng, id)
 		if type(k) ~= "number" then
 			errno = 400
 			error("Invalid data", level)
-		end
-		if not eng.has_id(id, 'tasks') then
-			errno = 400
-			error("Invalid task", level)
 		end
 		if not eng.has_id(v, 'tagnames') then
 			errno = 400
