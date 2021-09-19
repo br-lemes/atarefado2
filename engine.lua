@@ -69,6 +69,14 @@ local function get_options()
 	return result
 end
 
+-- return true if d is a valid date else return nil or false
+local function isdate(d)
+	local t = { }
+	t.year, t.month, t.day = d:match('(%d%d%d%d)-(%d%d)-(%d%d)')
+	return t.year and t.month and t.day and
+		os.date(dateformat, os.time(t)) == d
+end
+
 -- return true if d is an unespecified time
 local function isanytime(d)
 	return not d or d == '' or d == 'anytime'
@@ -177,6 +185,7 @@ return {
 	has_id      = has_id,
 	has_tag     = has_tag,
 	get_options = get_options,
+	isdate      = isdate,
 	isanytime   = isanytime,
 	istomorrow  = istomorrow,
 	isfuture    = isfuture,
