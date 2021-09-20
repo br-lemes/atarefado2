@@ -47,6 +47,32 @@ local invalid = {
 	value  = "Invalid value",
 }
 
+local function read_data(valid_keys)
+	if not mg then return nil end
+	if mg.request_info.content_length > 1024 then
+		return nil, "Too large data"
+	end
+	local request_body = mg.read()
+	if not request_body then
+		return nil, "No data"
+	end
+	local data = require("json").decode(request_body)
+	if valid_keys then
+		for k, _ in pairs(data) do
+			if not valid_keys[k] then
+				return nil, "Invalid data"
+			end
+		end
+	else
+		for k, _ in pairs(data) do
+			if type(k) ~= "number" then
+				return nil, "Invalid data"
+			end
+		end
+	end
+	return data
+end
+
 local function exec(sql)
 	local r = db:exec(sql)
 	if r ~= sqlite3.OK then error(db:errmsg(), level == 1 and 2 or level) end
@@ -401,6 +427,7 @@ end
 exec("END;")
 
 return {
+	read_data   = read_data,
 	db          = db,
 	has_table   = has_table,
 	has_id      = has_id,

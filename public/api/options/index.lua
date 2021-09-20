@@ -13,21 +13,10 @@ local function get(eng)
 end
 
 local function post(eng)
-	if mg.request_info.content_length > 1024 then
+	local data, errmsg = eng.read_data{option = true, value = true}
+	if not data then
 		errno = 400
-		error("Too large data", level)
-	end
-	local request_body = mg.read()
-	if not request_body then
-		errno = 400
-		error("No data", level)
-	end
-	local data = json.decode(request_body)
-	for k, _ in pairs(data) do
-		if k ~= "option" and k ~= "value" then
-			errno = 400
-			error("Invalid data", level)
-		end
+		error(errmsg, level)
 	end
 	local status, errmsg = eng.set_options(data.option, data.value)
 	if not status then
