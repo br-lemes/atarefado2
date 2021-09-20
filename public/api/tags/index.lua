@@ -7,15 +7,14 @@ local level = DEBUG and 1 or 0
 local json = require("json")
 
 local function get(eng, id)
-	local sqlstr
-	if not id then
-		sqlstr = "SELECT id, name FROM tagnames WHERE id > 38 ORDER BY name;"
-	else
-		sqlstr = string.format("SELECT id, name FROM tagnames WHERE id=%d;", id)
+	local result, errmsg = eng.get_tags(id)
+	if not result then
+		errno = 400
+		error(errmsg, level)
 	end
-	local result = { }
-	for row in eng.db:nrows(sqlstr) do
-		table.insert(result, row)
+	if id and #result == 0 then
+		errno = 404
+		error("Not found", level)
 	end
 	mg.send_http_ok(mg.get_mime_type("type.json"), json.encode(result))
 end

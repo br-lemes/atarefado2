@@ -24,6 +24,29 @@ if not db then error(errmsg, level) end
 
 local dateformat = "%Y-%m-%d"
 
+local accept = {
+	late      = "accepting late (before yesterday)",
+	yesterday = "accepting yesterday",
+	today     = "accepting today",
+	tomorrow  = "accepting tomorrow",
+	future    = "accepting future (after tomorrow)",
+	value     = "accepting invalid value",
+}
+
+local reject = {
+	late      = "not " .. accept.late,
+	yesterday = "not " .. accept.yesterday,
+	today     = "not " .. accept.today,
+	tomorrow  = "not " .. accept.tomorrow,
+	future    = "not " .. accept.future,
+	value     = "not accepting valid value",
+}
+
+local invalid = {
+	option = "Invalid option",
+	value  = "Invalid value",
+}
+
 local function exec(sql)
 	local r = db:exec(sql)
 	if r ~= sqlite3.OK then error(db:errmsg(), level == 1 and 2 or level) end
@@ -130,16 +153,16 @@ local function set_options(option, value)
 		tag       = true,
 	}
 	if not valid_options[option] then
-		return nil, "Invalid option"
+		return nil, invalid.option
 	end
 	if option == "tag" then
 		value = tostring(value)
 		if not value:find("^%d+$") then
-			return nil, "Invalid value"
+			return nil, invalid.value
 		end
 	else
 		if value ~= "ON" and value ~= "OFF" then
-			return nil, "Invalid value"
+			return nil, invalid.value
 		end
 	end
 	exec(string.format("UPDATE options SET value=%q WHERE name=%q;", value, option))
@@ -148,10 +171,10 @@ end
 
 local function test_set_options() -- luacheck: no unused
 	assert(set_options("option", "ON") == nil, "accepting invalid option")
-	assert(set_options("tomorrow", "NO") == nil, "accepting invalid value")
-	assert(set_options("tomorrow", "OFF"), "not accepting valid value")
-	assert(set_options("tag", "ON") == nil, "accepting invalid value")
-	assert(set_options("tag", 2), "not accepting valid value")
+	assert(set_options("tomorrow", "NO") == nil, accept.value)
+	assert(set_options("tomorrow", "OFF"), reject.value)
+	assert(set_options("tag", "ON") == nil, accept.value)
+	assert(set_options("tag", 2), reject.value)
 	local o = get_options()
 	assert(o.tomorrow == "OFF", "tomorrow ~= 'OFF'")
 	assert(o.tag == 2, "tag ~= 2")
@@ -163,6 +186,31 @@ local function isdate(d)
 	t.year, t.month, t.day = d:match('(%d%d%d%d)-(%d%d)-(%d%d)')
 	return t.year and t.month and t.day and
 		os.date(dateformat, os.time(t)) == d
+end
+
+local function get_tags(id)
+	local sql
+	if id then
+		id = tostring(id)
+		if not id:find("^%d+$") then
+			return nil, invalid.value
+		end
+		sql = string.format("SELECT id, name FROM tagnames WHERE id=%d;", id)
+	else
+		sql = "SELECT id, name FROM tagnames WHERE id > 38 ORDER BY name;"
+	end
+	local result = { }
+	for row in db:nrows(sql) do
+		table.insert(result, row)
+	end
+	return result
+end
+
+local function test_get_tags() -- luacheck: no unused
+	assert(#get_tags() == 0, "unexpected tag")
+	assert(get_tags("") == nil, accept.value)
+	assert(get_tags("1"), reject.value)
+	assert(get_tags(1), reject.value)
 end
 
 local function test_isdate() -- luacheck: no unused
@@ -188,23 +236,6 @@ local function istomorrow(d)
 	tomorrow.day = tomorrow.day + 1
 	return d == os.date(dateformat, os.time(tomorrow))
 end
-
-local accept = {
-	late = "accepting late (before yesterday)",
-	yesterday = "accepting yesterday",
-	today = "accepting today",
-	tomorrow = "accepting tomorrow",
-	future = "accepting future (after tomorrow)"
-}
-
-local reject = {
-	late = "not " .. accept.late,
-	yesterday = "not " .. accept.yesterday,
-	today = "not " .. accept.today,
-	tomorrow = "not " .. accept.tomorrow,
-	future = "not " .. accept.future
-}
-
 
 local function get_today()
 	return os.date(dateformat)
@@ -376,6 +407,7 @@ return {
 	has_tag     = has_tag,
 	get_options = get_options,
 	set_options = set_options,
+	get_tags    = get_tags,
 	isdate      = isdate,
 	isanytime   = isanytime,
 	istomorrow  = istomorrow,
