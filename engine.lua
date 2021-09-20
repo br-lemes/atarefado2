@@ -206,14 +206,6 @@ local function test_set_options() -- luacheck: no unused
 	assert(o.tag == 2, "tag ~= 2")
 end
 
--- return true if d is a valid date else return nil or false
-local function isdate(d)
-	local t = { }
-	t.year, t.month, t.day = d:match('(%d%d%d%d)-(%d%d)-(%d%d)')
-	return t.year and t.month and t.day and
-		os.date(dateformat, os.time(t)) == d
-end
-
 local function get_tags(id)
 	local sql
 	if id then
@@ -237,6 +229,14 @@ local function test_get_tags() -- luacheck: no unused
 	assert(get_tags("") == nil, accept.value)
 	assert(get_tags("1"), reject.value)
 	assert(get_tags(1), reject.value)
+end
+
+-- return true if d is a valid date else return nil or false
+local function isdate(d)
+	local t = { }
+	t.year, t.month, t.day = d:match('(%d%d%d%d)-(%d%d)-(%d%d)')
+	return t.year and t.month and t.day and
+		os.date(dateformat, os.time(t)) == d
 end
 
 local function test_isdate() -- luacheck: no unused
