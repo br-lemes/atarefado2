@@ -1,3 +1,5 @@
+-- /tasks/(%d+)/?
+-- path_info optional
 
 local errno = 500
 

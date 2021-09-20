@@ -1,3 +1,5 @@
+-- /_G/([_%a][_%w]*)
+-- path_info optional
 
 local errno = 500
 

@@ -1,3 +1,5 @@
+-- /options/
+-- path_info not allowed
 
 local errno = 500
 

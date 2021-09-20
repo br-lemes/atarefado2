@@ -1,3 +1,5 @@
+-- /tags/task/(%d+)/?
+-- path_info required
 
 local errno = 500
 
