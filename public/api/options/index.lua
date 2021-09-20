@@ -18,12 +18,13 @@ local function post(eng)
 		errno = 400
 		error(errmsg, level)
 	end
-	local status, errmsg = eng.set_options(data.option, data.value)
-	if not status then
+	local result
+	result, errmsg = eng.set_options(data.option, data.value)
+	if not result then
 		errno = 400
 		error(errmsg, level)
 	end
-	get(eng)
+	mg.send_http_ok(mg.get_mime_type("type.json"), json.encode(result))
 end
 
 local method = { GET = get, POST = post }

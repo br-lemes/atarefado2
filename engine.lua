@@ -192,7 +192,7 @@ local function set_options(option, value)
 		end
 	end
 	exec(string.format("UPDATE options SET value=%q WHERE name=%q;", value, option))
-	return true
+	return get_options()
 end
 
 local function test_set_options() -- luacheck: no unused
@@ -200,8 +200,7 @@ local function test_set_options() -- luacheck: no unused
 	assert(set_options("tomorrow", "NO") == nil, accept.value)
 	assert(set_options("tomorrow", "OFF"), reject.value)
 	assert(set_options("tag", "ON") == nil, accept.value)
-	assert(set_options("tag", 2), reject.value)
-	local o = get_options()
+	local o = assert(set_options("tag", 2), reject.value)
 	assert(o.tomorrow == "OFF", "tomorrow ~= 'OFF'")
 	assert(o.tag == 2, "tag ~= 2")
 end
