@@ -230,6 +230,46 @@ local function test_get_tags() -- luacheck: no unused
 	assert(get_tags(1), reject.value)
 end
 
+local function set_tags(name, id)
+	if id then
+		id = tostring(id)
+		if not id:find("^%d+$") then
+			return nil, invalid.value
+		end
+		id = tonumber(id)
+		if id <= 38 or not has_id(id, "tagnames") then
+			return nil, "Invalid tag"
+		end
+	end
+	if not name or type(name) ~= "string" then
+		return nil, "Invalid name"
+	end
+	local result = { }
+	if id then
+		local query = db:prepare("UPDATE tagnames SET name=? WHERE id=?;")
+		query:bind_values(name, id)
+		query:step()
+		query:finalize()
+		result.id   = id
+		result.name = name
+	else
+		local query = db:prepare("INSERT INTO tagnames VALUES(NULL, ?);")
+		query:bind_values(name)
+		query:step()
+		result.id   = query:last_insert_rowid()
+		result.name = name
+		query:finalize()
+	end
+	return result
+end
+
+local function test_set_tags() -- luacheck: no unused
+	assert(set_tags() == nil, accept.value)
+	assert(set_tags({}) == nil, accept.value)
+	assert(set_tags("", 1) == nil, accept.value)
+	assert(set_tags("test").name == "test", "unexpected result")
+end
+
 -- return true if d is a valid date else return nil or false
 local function isdate(d)
 	local t = { }
@@ -434,6 +474,7 @@ return {
 	get_options = get_options,
 	set_options = set_options,
 	get_tags    = get_tags,
+	set_tags    = set_tags,
 	isdate      = isdate,
 	isanytime   = isanytime,
 	istomorrow  = istomorrow,
