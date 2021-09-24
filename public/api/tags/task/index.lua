@@ -18,43 +18,18 @@ local function get(eng, id)
 end
 
 local function post(eng, id)
-	if not eng.has_id(id, 'tasks') then
-		errno = 404
-		error("Not found", level)
-	end
-	if mg.request_info.content_length > 1024 then
+	local data, errmsg = eng.read_data()
+	if not data then
 		errno = 400
-		error("Too large data", level)
+		error(errmsg, level)
 	end
-	local request_body = mg.read()
-	if not request_body then
+	local result
+	result, errmsg = eng.set_tags_task(id, data)
+	if not result then
 		errno = 400
-		error("No data", level)
+		error(errmsg, level)
 	end
-	local data = json.decode(request_body)
-	if not data or type(data) ~= "table" or #data == 0 then
-		errno = 400
-		error("Invalid data", level)
-	end
-	for k, v in pairs(data) do
-		if type(k) ~= "number" then
-			errno = 400
-			error("Invalid data", level)
-		end
-		if not eng.has_id(v, 'tagnames') then
-			errno = 400
-			error("Invalid tag", level)
-		end
-		if eng.has_tag(id, v) then
-			errno = 400
-			error("Already tagged", level)
-		end
-	end
-	for _, v in ipairs(data) do
-		eng.db:execute(string.format(
-			"INSERT INTO tags VALUES(%d, %d);", id, v))
-	end
-	get(eng, id)
+	mg.send_http_ok(mg.get_mime_type("type.json"), json.encode(result))
 end
 
 local function delete(eng, id)

@@ -319,6 +319,36 @@ local function get_tags_task(id)
 	return result
 end
 
+local function set_tags_task(id, tags)
+	if not id then return nil, invalid.value end
+	id = tostring(id)
+	if not id:find("^%d+$") then
+		return nil, invalid.value
+	end
+	id = tonumber(id)
+	if not has_id(id, 'tasks') then
+		return nil, invalid.task
+	end
+	for _, v in ipairs(tags) do
+		v = tostring(v)
+		if not v:find("^%d+$") then
+			return nil, invalid.value
+		end
+		v = tonumber(v)
+		if not has_id(v, 'tagnames') then
+			return nil, invalid.tag
+		end
+		if has_tag(id, v) then
+			return nil, "Already tagged"
+		end
+	end
+	for _, v in ipairs(tags) do
+		db:execute(string.format(
+			"INSERT INTO tags VALUES(%d, %d);", id, v))
+	end
+	return get_tags_task(id)
+end
+
 -- return true if d is a valid date else return nil or false
 local function isdate(d)
 	local t = { }
@@ -526,6 +556,7 @@ return {
 	set_tags      = set_tags,
 	del_tags      = del_tags,
 	get_tags_task = get_tags_task,
+	set_tags_task = set_tags_task,
 	isdate        = isdate,
 	isanytime     = isanytime,
 	istomorrow    = istomorrow,
