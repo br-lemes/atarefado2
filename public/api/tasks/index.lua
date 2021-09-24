@@ -21,7 +21,7 @@ local function get(eng, id)
 		end
 		local tags = { }
 		for tag in eng.db:urows(string.format(
-			"SELECT tag FROM tags WHERE task=%d;", id)) do
+			"SELECT tag FROM tags WHERE task=%d ORDER BY tag;", id)) do
 			table.insert(tags, tag)
 		end
 		result[1].tags = tags
@@ -62,7 +62,7 @@ local function get(eng, id)
 	for _, row in ipairs(result) do
 		row.tags = { }
 		for tag in eng.db:urows(string.format(
-			"SELECT tag FROM tags WHERE task=%d;", row.id)) do
+			"SELECT tag FROM tags WHERE task=%d ORDER BY tag;", row.id)) do
 			table.insert(row.tags, tag)
 		end
 	end

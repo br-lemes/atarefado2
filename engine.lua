@@ -313,7 +313,7 @@ local function get_tags_task(id)
 	end
 	local result = { }
 	for tag in db:urows(string.format(
-		"SELECT tag FROM tags WHERE task=%d;", id)) do
+		"SELECT tag FROM tags WHERE task=%d ORDER BY tag;", id)) do
 		table.insert(result, tag)
 	end
 	return result
