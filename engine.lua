@@ -19,8 +19,8 @@ assert(
 	os.time{day = 1, month = 1, year = 2013}
 )
 
-local db, _, errmsg = sqlite3.open("database.sqlite3")
-if not db then error(errmsg, level) end
+local db, _, dbemsg = sqlite3.open("database.sqlite3")
+if not db then error(dbemsg, level) end
 
 local dateformat = "%Y-%m-%d"
 
@@ -51,6 +51,27 @@ local invalid = {
 	tag    = "Invalid tag",
 }
 
+local function valid_data(data, valid_keys)
+	if not data or type(data) ~= "table" then
+		return nil, invalid.data
+	end
+	if valid_keys then
+		for k, _ in pairs(data) do
+			if not valid_keys[k] then
+				return nil, invalid.data
+			end
+		end
+	else
+		if #data == 0 then return nil, invalid.data end
+		for k, _ in pairs(data) do
+			if type(k) ~= "number" then
+				return nil, invalid.data
+			end
+		end
+	end
+	return true
+end
+
 local function read_data(valid_keys)
 	if not mg then return nil end
 	if mg.request_info.content_length > 1024 then
@@ -61,19 +82,8 @@ local function read_data(valid_keys)
 		return nil, "No data"
 	end
 	local data = require("json").decode(request_body)
-	if valid_keys then
-		for k, _ in pairs(data) do
-			if not valid_keys[k] then
-				return nil, invalid.data
-			end
-		end
-	else
-		for k, _ in pairs(data) do
-			if type(k) ~= "number" then
-				return nil, invalid.data
-			end
-		end
-	end
+	local valid, errmsg = valid_data(data, valid_keys)
+	if not valid then return nil, errmsg end
 	return data
 end
 
@@ -329,6 +339,8 @@ local function set_tags_task(id, tags)
 	if not has_id(id, 'tasks') then
 		return nil, invalid.task
 	end
+	local valid, errmsg = valid_data(tags)
+	if not valid then return nil, errmsg end
 	for _, v in ipairs(tags) do
 		v = tostring(v)
 		if not v:find("^%d+$") then
