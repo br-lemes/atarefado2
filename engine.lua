@@ -275,7 +275,7 @@ local function test_set_tags() -- luacheck: no unused
 end
 
 local function del_tags(id)
-	if not id then return nil, invalid.tag end
+	if not id then return nil, invalid.value end
 	id = tostring(id)
 	if not id:find("^%d+$") then
 		return nil, invalid.value
@@ -299,6 +299,24 @@ local function test_del_tags(id) -- luacheck: no unused
 	assert(del_tags(40) == nil, accept.value)
 	local t = assert(del_tags("39"), reject.value)
 	assert(#t == 0, "unexpected result")
+end
+
+local function get_tags_task(id)
+	if not id then return nil, invalid.value end
+	id = tostring(id)
+	if not id:find("^%d+$") then
+		return nil, invalid.value
+	end
+	id = tonumber(id)
+	if not has_id(id, 'tasks') then
+		return nil, invalid.task
+	end
+	local result = { }
+	for tag in db:urows(string.format(
+		"SELECT tag FROM tags WHERE task=%d;", id)) do
+		table.insert(result, tag)
+	end
+	return result
 end
 
 -- return true if d is a valid date else return nil or false
@@ -497,22 +515,23 @@ end
 exec("END;")
 
 return {
-	read_data   = read_data,
-	db          = db,
-	has_table   = has_table,
-	has_id      = has_id,
-	has_tag     = has_tag,
-	get_options = get_options,
-	set_options = set_options,
-	get_tags    = get_tags,
-	set_tags    = set_tags,
-	del_tags    = del_tags,
-	isdate      = isdate,
-	isanytime   = isanytime,
-	istomorrow  = istomorrow,
-	isfuture    = isfuture,
-	istoday     = istoday,
-	isyesterday = isyesterday,
-	islate      = islate,
-	daysmonth   = daysmonth,
+	read_data     = read_data,
+	db            = db,
+	has_table     = has_table,
+	has_id        = has_id,
+	has_tag       = has_tag,
+	get_options   = get_options,
+	set_options   = set_options,
+	get_tags      = get_tags,
+	set_tags      = set_tags,
+	del_tags      = del_tags,
+	get_tags_task = get_tags_task,
+	isdate        = isdate,
+	isanytime     = isanytime,
+	istomorrow    = istomorrow,
+	isfuture      = isfuture,
+	istoday       = istoday,
+	isyesterday   = isyesterday,
+	islate        = islate,
+	daysmonth     = daysmonth,
 }

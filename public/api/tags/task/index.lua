@@ -9,14 +9,10 @@ local level = DEBUG and 1 or 0
 local json = require("json")
 
 local function get(eng, id)
-	if not eng.has_id(id, 'tasks') then
-		errno = 404
-		error("Not found", level)
-	end
-	local result = { }
-	for tag in eng.db:urows(string.format(
-		"SELECT tag FROM tags WHERE task=%d;", id)) do
-		table.insert(result, tag)
+	local result, errmsg = eng.get_tags_task(id)
+	if not result then
+		errno = 400
+		error(errmsg, level)
 	end
 	mg.send_http_ok(mg.get_mime_type("type.json"), json.encode(result))
 end
