@@ -37,21 +37,12 @@ local function post(eng, id)
 end
 
 local function delete(eng, id)
-	if id <= 38 then
+	local result, errmsg = eng.del_tags(id)
+	if not result then
 		errno = 400
-		error("Invalid tag")
+		error(errmsg)
 	end
-	if not eng.has_id(id, "tagnames") then
-		errno = 400
-		error("Invalid tag")
-	end
-	for row in eng.db:nrows("SELECT id FROM tasks;") do
-		eng.db:execute(string.format(
-			"DELETE FROM tags WHERE task=%d and tag=%d;",
-			row.id, id))
-	end
-	eng.db:execute(string.format("DELETE FROM tagnames WHERE id=%d;", id))
-	get(eng)
+	mg.send_http_ok(mg.get_mime_type("type.json"), json.encode(result))
 end
 
 local method = { GET = get, POST = post, DELETE = delete }

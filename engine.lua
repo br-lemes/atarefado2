@@ -45,6 +45,10 @@ local reject = {
 local invalid = {
 	option = "Invalid option",
 	value  = "Invalid value",
+	data   = "Invalid data",
+	name   = "Invalid name",
+	task   = "Invalid task",
+	tag    = "Invalid tag",
 }
 
 local function read_data(valid_keys)
@@ -60,13 +64,13 @@ local function read_data(valid_keys)
 	if valid_keys then
 		for k, _ in pairs(data) do
 			if not valid_keys[k] then
-				return nil, "Invalid data"
+				return nil, invalid.data
 			end
 		end
 	else
 		for k, _ in pairs(data) do
 			if type(k) ~= "number" then
-				return nil, "Invalid data"
+				return nil, invalid.data
 			end
 		end
 	end
@@ -238,11 +242,11 @@ local function set_tags(name, id)
 		end
 		id = tonumber(id)
 		if id <= 38 or not has_id(id, "tagnames") then
-			return nil, "Invalid tag"
+			return nil, invalid.tag
 		end
 	end
 	if not name or type(name) ~= "string" then
-		return nil, "Invalid name"
+		return nil, invalid.name
 	end
 	local result = { }
 	if id then
@@ -268,6 +272,33 @@ local function test_set_tags() -- luacheck: no unused
 	assert(set_tags({}) == nil, accept.value)
 	assert(set_tags("", 1) == nil, accept.value)
 	assert(set_tags("test").name == "test", "unexpected result")
+end
+
+local function del_tags(id)
+	if not id then return nil, invalid.tag end
+	id = tostring(id)
+	if not id:find("^%d+$") then
+		return nil, invalid.value
+	end
+	id = tonumber(id)
+	if id <= 38 or not has_id(id, "tagnames") then
+		return nil, invalid.tag
+	end
+	for row in db:nrows("SELECT id FROM tasks;") do
+		db:execute(string.format(
+			"DELETE FROM tags WHERE task=%d and tag=%d;",
+			row.id, id))
+	end
+	db:execute(string.format("DELETE FROM tagnames WHERE id=%d;", id))
+	return get_tags()
+end
+
+local function test_del_tags(id) -- luacheck: no unused
+	assert(del_tags() == nil, accept.value)
+	assert(del_tags(1) == nil, accept.value)
+	assert(del_tags(40) == nil, accept.value)
+	local t = assert(del_tags("39"), reject.value)
+	assert(#t == 0, "unexpected result")
 end
 
 -- return true if d is a valid date else return nil or false
@@ -475,6 +506,7 @@ return {
 	set_options = set_options,
 	get_tags    = get_tags,
 	set_tags    = set_tags,
+	del_tags    = del_tags,
 	isdate      = isdate,
 	isanytime   = isanytime,
 	istomorrow  = istomorrow,
