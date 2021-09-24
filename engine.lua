@@ -361,6 +361,42 @@ local function set_tags_task(id, tags)
 	return get_tags_task(id)
 end
 
+local function del_tags_task(id, tags)
+	if not id then return nil, invalid.value end
+	id = tostring(id)
+	if not id:find("^%d+$") then
+		return nil, invalid.value
+	end
+	id = tonumber(id)
+	if not has_id(id, 'tasks') then
+		return nil, invalid.task
+	end
+	local valid, errmsg = valid_data(tags)
+	if not valid then return nil, errmsg end
+	for _, v in ipairs(tags) do
+		v = tostring(v)
+		if not v:find("^%d+$") then
+			return nil, invalid.value
+		end
+		v = tonumber(v)
+		if not has_id(v, 'tagnames') then
+			return nil, invalid.tag
+		end
+		if not has_tag(id, v) then
+			return nil, "Not tagged"
+		end
+	end
+	for _, v in ipairs(tags) do
+		db:execute(string.format(
+			"DELETE FROM tags WHERE task=%d AND tag=%d;", id, v))
+	end
+	return get_tags_task(id)
+end
+
+local function test_del_tags_task() -- luacheck: no unused
+	assert(del_tags_task(1, {}))
+end
+
 -- return true if d is a valid date else return nil or false
 local function isdate(d)
 	local t = { }
@@ -569,6 +605,7 @@ return {
 	del_tags      = del_tags,
 	get_tags_task = get_tags_task,
 	set_tags_task = set_tags_task,
+	del_tags_task = del_tags_task,
 	isdate        = isdate,
 	isanytime     = isanytime,
 	istomorrow    = istomorrow,
