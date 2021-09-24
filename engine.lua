@@ -234,7 +234,7 @@ local function test_get_tags() -- luacheck: no unused
 	assert(get_tags(1), reject.value)
 end
 
-local function set_tags(name, id)
+local function set_tags(id, name)
 	if id then
 		id = tostring(id)
 		if not id:find("^%d+$") then
@@ -270,8 +270,8 @@ end
 local function test_set_tags() -- luacheck: no unused
 	assert(set_tags() == nil, accept.value)
 	assert(set_tags({}) == nil, accept.value)
-	assert(set_tags("", 1) == nil, accept.value)
-	assert(set_tags("test").name == "test", "unexpected result")
+	assert(set_tags(1, "") == nil, accept.value)
+	assert(set_tags(nil, "test").name == "test", "unexpected result")
 end
 
 local function del_tags(id)

@@ -28,7 +28,7 @@ local function post(eng, id)
 		error(errmsg, level)
 	end
 	local result
-	result, errmsg = eng.set_tags(data.name, id)
+	result, errmsg = eng.set_tags(id, data.name)
 	if not result then
 		errno = 400
 		error(errmsg, level)
