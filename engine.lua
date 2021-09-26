@@ -51,6 +51,8 @@ local invalid = {
 	tag    = "Invalid tag",
 }
 
+local is = { }
+
 local function valid_data(data, valid_keys)
 	if not data or type(data) ~= "table" then
 		return nil, invalid.data
@@ -397,6 +399,67 @@ local function test_del_tags_task() -- luacheck: no unused
 	assert(del_tags_task(1, {}))
 end
 
+local function get_tasks(id)
+	if id then
+		id = tostring(id)
+		if not id:find("^%d+$") then
+			return nil, invalid.value
+		end
+		local result = { }
+		for row in db:nrows(string.format(
+			"SELECT * FROM tasks WHERE id=%d;", id)) do
+			table.insert(result, row)
+		end
+		if #result == 0 then return nil, invalid.task end
+		local tags = { }
+		for tag in db:urows(string.format(
+			"SELECT tag FROM tags WHERE task=%d ORDER BY tag;", id)) do
+			table.insert(tags, tag)
+		end
+		result[1].tags = tags
+		return result
+	end
+	local options = get_options()
+	local sql_select = "SELECT id, name, date, comment, recurrent FROM tasks"
+	local sql_join   = ""
+	local sql_where  = ""
+	if options.tag == 2 then
+		sql_join = "LEFT JOIN tags ON tasks.id = tags.task"
+		sql_where = "WHERE tags.task IS NULL"
+	elseif options.tag > 2 then
+		local tag
+		for row in db:nrows(string.format(
+			"SELECT id FROM tagnames WHERE id > 38 ORDER BY name LIMIT 1 OFFSET %d - 3;",
+			options.tag)) do
+			tag = row.id
+		end
+		sql_join = "JOIN tags ON tasks.id = tags.task"
+		sql_where = "WHERE tags.tag = " .. tostring(tag)
+	end
+	local result = { }
+	for row in db:nrows(string.format("%s %s %s ORDER BY tasks.name;",
+		sql_select, sql_join, sql_where)) do
+		for _, time in ipairs{
+				"anytime", "tomorrow", "future",
+				"today", "yesterday", "late"
+			} do
+			if options[time] == "OFF" and is[time](row.date) then
+				goto continue
+			end
+		end
+		table.insert(result, row)
+		::continue::
+	end
+	for _, row in ipairs(result) do
+		row.tags = { }
+		for tag in db:urows(string.format(
+			"SELECT tag FROM tags WHERE task=%d ORDER BY tag;", row.id)) do
+			table.insert(row.tags, tag)
+		end
+	end
+	return result
+end
+
 -- return true if d is a valid date else return nil or false
 local function isdate(d)
 	local t = { }
@@ -592,6 +655,14 @@ if not has_table("options") then
 end
 exec("END;")
 
+is.date      = isdate
+is.anytime   = isanytime
+is.tomorrow  = istomorrow
+is.future    = isfuture
+is.today     = istoday
+is.yesterday = isyesterday
+is.late      = islate
+
 return {
 	read_data     = read_data,
 	db            = db,
@@ -606,6 +677,7 @@ return {
 	get_tags_task = get_tags_task,
 	set_tags_task = set_tags_task,
 	del_tags_task = del_tags_task,
+	get_tasks     = get_tasks,
 	isdate        = isdate,
 	isanytime     = isanytime,
 	istomorrow    = istomorrow,
