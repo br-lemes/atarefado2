@@ -460,6 +460,58 @@ local function get_tasks(id)
 	return result
 end
 
+local function set_tasks(id, task)
+	if task.recurrent then
+		task.recurrent = tostring(task.recurrent)
+		if not task.recurrent:find("^%d+$") then
+			return nil, invalid.value
+		end
+		task.recurrent = tonumber(task.recurrent)
+		if task.recurrent < 1 or task.recurrent > 4 then
+			return nil, invalid.value
+		end
+	end
+	if task.date and not eng.isanytime(task.date) and not eng.isdate(task.date) then
+		return nil, invalid.date
+	end
+	if id then
+		if has_id(id, "tasks") then
+			local sqlparams = { }
+			for k in pairs(task) do
+				table.insert(sqlparams, string.format("%s=:%s", k, k))
+			end
+			local query = db:prepare(string.format("UPDATE tasks SET %s WHERE id=:id;",
+				table.concat(sqlparams, ", ")))
+			task.id = id
+			query:bind_names(task)
+			query:step()
+			query:finalize()
+			return get_tasks(id)
+		else
+			if not task.name then return nil, "No name" end
+			task.comment   = task.comment or ""
+			task.date      = task.date or ""
+			task.recurrent = task.recurrent or 1
+			local query = db:prepare("INSERT INTO tasks VALUES(?, ?, ?, ?, ?);")
+			query:bind_values(id, task.name, task.date, task.comment, task.recurrent)
+			query:step()
+			query:finalize()
+			task.id = id
+		end
+	else
+		if not task.name then return nil, "No name" end
+		task.comment   = task.comment or ""
+		task.date      = task.date or ""
+		task.recurrent = task.recurrent or 1
+		local query = db:prepare("INSERT INTO tasks VALUES(NULL, ?, ?, ?, ?);")
+		query:bind_values(task.name, task.date, task.comment, task.recurrent)
+		query:step()
+		task.id = query:last_insert_rowid()
+		query:finalize()
+	end
+	return task
+end
+
 -- return true if d is a valid date else return nil or false
 local function isdate(d)
 	local t = { }
@@ -678,6 +730,7 @@ return {
 	set_tags_task = set_tags_task,
 	del_tags_task = del_tags_task,
 	get_tasks     = get_tasks,
+	set_tasks     = set_tasks,
 	isdate        = isdate,
 	isanytime     = isanytime,
 	istomorrow    = istomorrow,
