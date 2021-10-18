@@ -70,7 +70,7 @@ end
 -- return: true or false
 function eng.has_table(tname)
 	local query = eng.db:prepare(
-		'SELECT name FROM sqlite_master WHERE type="table" AND name=?')
+		"SELECT name FROM sqlite_master WHERE type='table' AND name=?")
 	if not query then error(eng.db:errmsg(), level) end
 	assert(query:bind_values(tname) == sqlite3.OK)
 	local result = query:step() == sqlite3.ROW and query:get_value(0) == tname
@@ -220,7 +220,7 @@ function eng.get_tags_task(id)
 		return nil, invalid.task
 	end
 	id = tonumber(id)
-	if not eng.has_id(id, 'tasks') then
+	if not eng.has_id(id, "tasks") then
 		return nil, invalid.task
 	end
 	local result = { }
@@ -238,7 +238,7 @@ function eng.set_tags_task(id, tags)
 		return nil, invalid.task
 	end
 	id = tonumber(id)
-	if not eng.has_id(id, 'tasks') then
+	if not eng.has_id(id, "tasks") then
 		return nil, invalid.task
 	end
 	local valid, errmsg = eng.valid_data(tags)
@@ -249,7 +249,7 @@ function eng.set_tags_task(id, tags)
 			return nil, invalid.tag
 		end
 		v = tonumber(v)
-		if not eng.has_id(v, 'tagnames') then
+		if not eng.has_id(v, "tagnames") then
 			return nil, invalid.tag
 		end
 		if eng.has_tag(id, v) then
@@ -270,7 +270,7 @@ function eng.del_tags_task(id, tags)
 		return nil, invalid.task
 	end
 	id = tonumber(id)
-	if not eng.has_id(id, 'tasks') then
+	if not eng.has_id(id, "tasks") then
 		return nil, invalid.task
 	end
 	local valid, errmsg = eng.valid_data(tags)
@@ -281,7 +281,7 @@ function eng.del_tags_task(id, tags)
 			return nil, invalid.tag
 		end
 		v = tonumber(v)
-		if not eng.has_id(v, 'tagnames') then
+		if not eng.has_id(v, "tagnames") then
 			return nil, invalid.tag
 		end
 		if not eng.has_tag(id, v) then
@@ -426,14 +426,14 @@ end
 -- return true if d is a valid date else return nil or false
 function eng.isdate(d)
 	local t = { }
-	t.year, t.month, t.day = d:match('(%d%d%d%d)-(%d%d)-(%d%d)')
+	t.year, t.month, t.day = d:match("(%d%d%d%d)-(%d%d)-(%d%d)")
 	return t.year and t.month and t.day and
 		os.date(eng.dateformat, os.time(t)) == d
 end
 
 -- return true if d is an unespecified time
 function eng.isanytime(d)
-	return not d or d == '' or d == 'anytime'
+	return not d or d == "" or d == "anytime"
 end
 
 -- return true if d is tomorrow
@@ -469,7 +469,7 @@ end
 function eng.daysmonth(month, year)
 	while month > 12 do month = month - 12 end
 	return month == 2 and (year % 4 == 0 and (year % 100 ~= 0 or year % 400 == 0)) and 29
-		or ('\31\28\31\30\31\30\31\31\30\31\30\31'):byte(month)
+		or ("\31\28\31\30\31\30\31\31\30\31\30\31"):byte(month)
 end
 
 function eng.get_tomorrow()
@@ -517,11 +517,11 @@ local function init()
 				"Qui", "Sex", "Sáb"
 			} do
 			eng.exec(string.format(
-				"INSERT INTO tagnames VALUES(NULL, %q);", v))
+				"INSERT INTO tagnames VALUES(NULL, '%s');", v))
 		end
 		for i = 1, 31 do
 			eng.exec(string.format(
-				'INSERT INTO tagnames VALUES(NULL, "%02d");',
+				"INSERT INTO tagnames VALUES(NULL, '%02d');",
 				i))
 		end
 	end
