@@ -148,7 +148,7 @@ function eng.get_tags(id)
 	if id then
 		id = tostring(id)
 		if not id:find("^%d+$") then
-			return nil, invalid.value
+			return nil, invalid.tag
 		end
 		sql = string.format("SELECT id, name FROM tagnames WHERE id=%d;", id)
 	else
@@ -165,7 +165,7 @@ function eng.set_tags(id, name)
 	if id then
 		id = tostring(id)
 		if not id:find("^%d+$") then
-			return nil, invalid.value
+			return nil, invalid.tag
 		end
 		id = tonumber(id)
 		if id <= 38 or not eng.has_id(id, "tagnames") then
@@ -195,10 +195,10 @@ function eng.set_tags(id, name)
 end
 
 function eng.del_tags(id)
-	if not id then return nil, invalid.value end
+	if not id then return nil, invalid.tag end
 	id = tostring(id)
 	if not id:find("^%d+$") then
-		return nil, invalid.value
+		return nil, invalid.tag
 	end
 	id = tonumber(id)
 	if id <= 38 or not eng.has_id(id, "tagnames") then
@@ -214,10 +214,10 @@ function eng.del_tags(id)
 end
 
 function eng.get_tags_task(id)
-	if not id then return nil, invalid.value end
+	if not id then return nil, invalid.task end
 	id = tostring(id)
 	if not id:find("^%d+$") then
-		return nil, invalid.value
+		return nil, invalid.task
 	end
 	id = tonumber(id)
 	if not eng.has_id(id, 'tasks') then
@@ -232,10 +232,10 @@ function eng.get_tags_task(id)
 end
 
 function eng.set_tags_task(id, tags)
-	if not id then return nil, invalid.value end
+	if not id then return nil, invalid.task end
 	id = tostring(id)
 	if not id:find("^%d+$") then
-		return nil, invalid.value
+		return nil, invalid.task
 	end
 	id = tonumber(id)
 	if not eng.has_id(id, 'tasks') then
@@ -246,7 +246,7 @@ function eng.set_tags_task(id, tags)
 	for _, v in ipairs(tags) do
 		v = tostring(v)
 		if not v:find("^%d+$") then
-			return nil, invalid.value
+			return nil, invalid.tag
 		end
 		v = tonumber(v)
 		if not eng.has_id(v, 'tagnames') then
@@ -264,10 +264,10 @@ function eng.set_tags_task(id, tags)
 end
 
 function eng.del_tags_task(id, tags)
-	if not id then return nil, invalid.value end
+	if not id then return nil, invalid.task end
 	id = tostring(id)
 	if not id:find("^%d+$") then
-		return nil, invalid.value
+		return nil, invalid.task
 	end
 	id = tonumber(id)
 	if not eng.has_id(id, 'tasks') then
@@ -278,7 +278,7 @@ function eng.del_tags_task(id, tags)
 	for _, v in ipairs(tags) do
 		v = tostring(v)
 		if not v:find("^%d+$") then
-			return nil, invalid.value
+			return nil, invalid.tag
 		end
 		v = tonumber(v)
 		if not eng.has_id(v, 'tagnames') then
@@ -299,7 +299,7 @@ function eng.get_tasks(id)
 	if id then
 		id = tostring(id)
 		if not id:find("^%d+$") then
-			return nil, invalid.value
+			return nil, invalid.task
 		end
 		local result = { }
 		for row in eng.db:nrows(string.format(
