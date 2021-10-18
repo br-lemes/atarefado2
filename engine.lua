@@ -19,6 +19,12 @@ local eng = { }
 
 eng.dateformat = "%Y-%m-%d"
 
+function eng.valid_int(int)
+	if not int then return nil end
+	if not tostring(int):find("^%d+$") then return nil end
+	return true
+end
+
 function eng.valid_data(data, valid_keys)
 	if not data or type(data) ~= "table" then
 		return nil, invalid.data
@@ -400,6 +406,21 @@ function eng.set_tasks(id, task)
 		query:finalize()
 	end
 	return task
+end
+
+function eng.del_tasks(id)
+	if not eng.valid_int(id) then return nil, invalid.task end
+	if not eng.has_id(id, "tasks") then return nil, invalid.task end
+	local task
+	local sql = string.format("SELECT * FROM tasks WHERE id=%d;", id)
+	for row in eng.db:nrows(sql) do task = row end
+	if task.recurrent == 1 then
+		eng.db:execute(string.format("DELETE FROM tags WHERE task=%d", id))
+		eng.db:execute(string.format("DELETE FROM tasks WHERE id=%d", id))
+		return {}
+	else
+		error("Not implemented")
+	end
 end
 
 -- return true if d is a valid date else return nil or false

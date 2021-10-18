@@ -34,22 +34,12 @@ local function post(eng, id)
 end
 
 local function delete(eng, id)
-	if not eng.has_id(id, 'tasks') then
+	local result, errmsg = eng.del_tasks(id)
+	if not result then
 		errno = 400
-		error("Invalid task", level)
+		error(errmsg, level)
 	end
-	local task
-	for row in eng.db:nrows(string.format(
-		"SELECT * FROM tasks WHERE id=%d;", id)) do
-		task = row
-	end
-	if task.recurrent == 1 then
-		eng.db:execute(string.format("DELETE FROM tags WHERE task=%d", id))
-		eng.db:execute(string.format("DELETE FROM tasks WHERE id=%d", id))
-		mg.send_http_ok(mg.get_mime_type("type.json"), "[]")
-	else
-		error("Not implemented")
-	end
+	mg.send_http_ok(mg.get_mime_type("type.json"), json.encode(result))
 end
 
 local method = { GET = get, POST = post, DELETE = delete }
