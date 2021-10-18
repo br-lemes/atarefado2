@@ -204,12 +204,14 @@ function eng.del_tags(id)
 	if id <= 38 or not eng.has_id(id, "tagnames") then
 		return nil, invalid.tag
 	end
+	eng.exec("BEGIN;")
 	for row in eng.db:nrows("SELECT id FROM tasks;") do
 		eng.exec(string.format(
 			"DELETE FROM tags WHERE task=%d and tag=%d;",
 			row.id, id))
 	end
 	eng.exec(string.format("DELETE FROM tagnames WHERE id=%d;", id))
+	eng.exec("END;")
 	return eng.get_tags()
 end
 
@@ -256,10 +258,12 @@ function eng.set_tags_task(id, tags)
 			return nil, "Already tagged"
 		end
 	end
+	eng.exec("BEGIN;")
 	for _, v in ipairs(tags) do
 		eng.exec(string.format(
 			"INSERT INTO tags VALUES(%d, %d);", id, v))
 	end
+	eng.exec("END;")
 	return eng.get_tags_task(id)
 end
 
@@ -288,10 +292,12 @@ function eng.del_tags_task(id, tags)
 			return nil, "Not tagged"
 		end
 	end
+	eng.exec("BEGIN;")
 	for _, v in ipairs(tags) do
 		eng.exec(string.format(
 			"DELETE FROM tags WHERE task=%d AND tag=%d;", id, v))
 	end
+	eng.exec("END;")
 	return eng.get_tags_task(id)
 end
 
