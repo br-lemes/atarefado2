@@ -19,6 +19,16 @@ local eng = { }
 
 eng.dateformat = "%Y-%m-%d"
 
+eng.default_options = {
+	anytime   = "ON",
+	tomorrow  = "ON",
+	future    = "ON",
+	today     = "ON",
+	yesterday = "ON",
+	late      = "ON",
+	tag       = "1",
+}
+
 function eng.valid_int(int)
 	if not int then return nil end
 	if not tostring(int):find("^%d+$") then return nil end
@@ -117,16 +127,7 @@ end
 
 -- set an option
 function eng.set_options(option, value)
-	local valid_options = {
-		anytime   = true,
-		tomorrow  = true,
-		future    = true,
-		today     = true,
-		yesterday = true,
-		late      = true,
-		tag       = true,
-	}
-	if not valid_options[option] then
+	if not eng.default_options[option] then
 		return nil, invalid.option
 	end
 	if option == "tag" then
@@ -559,13 +560,9 @@ local function init()
 				value TEXT
 			);]])
 		local optfmt = "INSERT INTO options VALUES(NULL, %q, %q);"
-		for _, v in ipairs{
-				"anytime", "tomorrow", "future",
-				"today", "yesterday", "late"
-			} do
-			eng.exec(string.format(optfmt, v, "ON"))
+		for k, v in pairs(eng.default_options) do
+			eng.exec(string.format(optfmt, k, v))
 		end
-		eng.exec(string.format(optfmt, "tag", "1"))
 		eng.exec(string.format(optfmt, "version", "1"))
 	end
 	eng.exec("END;")
