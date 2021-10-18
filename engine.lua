@@ -422,34 +422,6 @@ function eng.istomorrow(d)
 	return d == os.date(eng.dateformat, os.time(tomorrow))
 end
 
-function eng.get_today()
-	return os.date(eng.dateformat)
-end
-
-function eng.get_late()
-	local d = os.date("*t")
-	d.day = d.day - 2
-	return os.date(eng.dateformat, os.time(d))
-end
-
-function eng.get_yesterday()
-	local d = os.date("*t")
-	d.day = d.day - 1
-	return os.date(eng.dateformat, os.time(d))
-end
-
-function eng.get_tomorrow()
-	local d = os.date("*t")
-	d.day = d.day + 1
-	return os.date(eng.dateformat, os.time(d))
-end
-
-function eng.get_future()
-	local d = os.date("*t")
-	d.day = d.day + 2
-	return os.date(eng.dateformat, os.time(d))
-end
-
 -- return true if d is in the future but not tomorrow
 function eng.isfuture(d)
 	return not eng.isanytime(d) and not eng.istomorrow(d) and
@@ -477,6 +449,34 @@ function eng.daysmonth(month, year)
 	while month > 12 do month = month - 12 end
 	return month == 2 and (year % 4 == 0 and (year % 100 ~= 0 or year % 400 == 0)) and 29
 		or ('\31\28\31\30\31\30\31\31\30\31\30\31'):byte(month)
+end
+
+function eng.get_tomorrow()
+	local d = os.date("*t")
+	d.day = d.day + 1
+	return os.date(eng.dateformat, os.time(d))
+end
+
+function eng.get_future()
+	local d = os.date("*t")
+	d.day = d.day + 2
+	return os.date(eng.dateformat, os.time(d))
+end
+
+function eng.get_today()
+	return os.date(eng.dateformat)
+end
+
+function eng.get_yesterday()
+	local d = os.date("*t")
+	d.day = d.day - 1
+	return os.date(eng.dateformat, os.time(d))
+end
+
+function eng.get_late()
+	local d = os.date("*t")
+	d.day = d.day - 2
+	return os.date(eng.dateformat, os.time(d))
 end
 
 local function init()
