@@ -205,11 +205,11 @@ function eng.del_tags(id)
 		return nil, invalid.tag
 	end
 	for row in eng.db:nrows("SELECT id FROM tasks;") do
-		eng.db:execute(string.format(
+		eng.exec(string.format(
 			"DELETE FROM tags WHERE task=%d and tag=%d;",
 			row.id, id))
 	end
-	eng.db:execute(string.format("DELETE FROM tagnames WHERE id=%d;", id))
+	eng.exec(string.format("DELETE FROM tagnames WHERE id=%d;", id))
 	return eng.get_tags()
 end
 
@@ -257,7 +257,7 @@ function eng.set_tags_task(id, tags)
 		end
 	end
 	for _, v in ipairs(tags) do
-		eng.db:execute(string.format(
+		eng.exec(string.format(
 			"INSERT INTO tags VALUES(%d, %d);", id, v))
 	end
 	return eng.get_tags_task(id)
@@ -289,7 +289,7 @@ function eng.del_tags_task(id, tags)
 		end
 	end
 	for _, v in ipairs(tags) do
-		eng.db:execute(string.format(
+		eng.exec(string.format(
 			"DELETE FROM tags WHERE task=%d AND tag=%d;", id, v))
 	end
 	return eng.get_tags_task(id)
@@ -415,8 +415,8 @@ function eng.del_tasks(id)
 	local sql = string.format("SELECT * FROM tasks WHERE id=%d;", id)
 	for row in eng.db:nrows(sql) do task = row end
 	if task.recurrent == 1 then
-		eng.db:execute(string.format("DELETE FROM tags WHERE task=%d", id))
-		eng.db:execute(string.format("DELETE FROM tasks WHERE id=%d", id))
+		eng.exec(string.format("DELETE FROM tags WHERE task=%d", id))
+		eng.exec(string.format("DELETE FROM tasks WHERE id=%d", id))
 		return {}
 	else
 		error("Not implemented")
