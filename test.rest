@@ -1,7 +1,12 @@
 @host=http://localhost:8080
 {{
-	exports.options = ["tomorrow", "future"];
-	exports.tags = ["hello", "world"];
+	exports.options   = ["tomorrow", "future"];
+	exports.tags      = ["hello", "world"];
+	exports.tomorrow  = (d => new Date(d.setDate(d.getDate()+1)))(new Date).toISOString().slice(0, 10);
+	exports.future    = (d => new Date(d.setDate(d.getDate()+2)))(new Date).toISOString().slice(0, 10);
+	exports.today     = new Date().toISOString().slice(0, 10);
+	exports.yesterday = (d => new Date(d.setDate(d.getDate()-1)))(new Date).toISOString().slice(0, 10);
+	exports.late      = (d => new Date(d.setDate(d.getDate()-2)))(new Date).toISOString().slice(0, 10);
 }}
 ###
 GET /api/404
