@@ -115,11 +115,24 @@ function eng.has_tag(task, tag)
 	return result
 end
 
+function eng.count_tag()
+	local query = eng.db:prepare("SELECT COUNT(*) - 38 FROM tagnames;")
+	if not query then error(eng.db:errmsg(), level) end
+	local result = query:step() == sqlite3.ROW and query:get_value(0)
+	query:finalize()
+	return result
+end
+
 -- return a table with options
 function eng.get_options()
 	local result = { }
 	for name, value in eng.db:urows("SELECT name, value FROM options;") do
-		if name == "tag" then value = tonumber(value) end
+		if name == "tag" then
+			value = tonumber(value)
+			if value < 1 or value > eng.count_tag() + 2 then
+				value = 1
+			end
+		end
 		result[name] = value
 	end
 	return result
@@ -133,6 +146,10 @@ function eng.set_options(option, value)
 	if option == "tag" then
 		value = tostring(value)
 		if not value:find("^%d+$") then
+			return nil, invalid.value
+		end
+		value = tonumber(value)
+		if value < 1 or value > eng.count_tag() + 2 then
 			return nil, invalid.value
 		end
 	else
