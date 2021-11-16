@@ -1,0 +1,10 @@
+{
+    "anytime": "ON",
+    "future": "OFF",
+    "late": "ON",
+    "tag": 2,
+    "today": "ON",
+    "tomorrow": "OFF",
+    "version": "1",
+    "yesterday": "ON"
+}
