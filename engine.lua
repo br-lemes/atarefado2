@@ -395,6 +395,7 @@ function eng.set_tasks(id, task)
 			task.comment   = task.comment or ""
 			task.date      = task.date or ""
 			task.recurrent = task.recurrent or 1
+			task.tags      = {}
 			local query = eng.db:prepare("INSERT INTO tasks VALUES(?, ?, ?, ?, ?);")
 			query:bind_values(id, task.name, task.date, task.comment, task.recurrent)
 			query:step()
@@ -406,6 +407,7 @@ function eng.set_tasks(id, task)
 		task.comment   = task.comment or ""
 		task.date      = task.date or ""
 		task.recurrent = task.recurrent or 1
+		task.tags      = {}
 		local query = eng.db:prepare("INSERT INTO tasks VALUES(NULL, ?, ?, ?, ?);")
 		query:bind_values(task.name, task.date, task.comment, task.recurrent)
 		query:step()
