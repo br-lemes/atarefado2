@@ -22,7 +22,7 @@
 -- SOFTWARE.
 --
 
-local json = { _version = "0.1.2" }
+local json = { _version = "0.1.2fix" }
 
 -------------------------------------------------------------------------------
 -- Encode
@@ -51,7 +51,7 @@ local function escape_char(c)
 end
 
 
-local function encode_nil(val)
+local function encode_nil()
   return "null"
 end
 
@@ -78,7 +78,7 @@ local function encode_table(val, stack)
       error("invalid table: sparse array")
     end
     -- Encode
-    for i, v in ipairs(val) do
+    for _, v in ipairs(val) do
       table.insert(res, encode(v, stack))
     end
     stack[val] = nil
@@ -216,7 +216,7 @@ end
 
 
 local function parse_string(str, i)
-  local res = ""
+  local res = {}
   local j = i + 1
   local k = j
 
@@ -227,26 +227,26 @@ local function parse_string(str, i)
       decode_error(str, j, "control character in string")
 
     elseif x == 92 then -- `\`: Escape
-      res = res .. str:sub(k, j - 1)
+      table.insert(res, str:sub(k, j - 1))
       j = j + 1
       local c = str:sub(j, j)
       if c == "u" then
         local hex = str:match("^[dD][89aAbB]%x%x\\u%x%x%x%x", j + 1)
                  or str:match("^%x%x%x%x", j + 1)
                  or decode_error(str, j - 1, "invalid unicode escape in string")
-        res = res .. parse_unicode_escape(hex)
+        table.insert(res, parse_unicode_escape(hex))
         j = j + #hex
       else
         if not escape_chars[c] then
           decode_error(str, j - 1, "invalid escape char '" .. c .. "' in string")
         end
-        res = res .. escape_char_map_inv[c]
+        table.insert(res, escape_char_map_inv[c])
       end
       k = j + 1
 
     elseif x == 34 then -- `"`: End of string
-      res = res .. str:sub(k, j - 1)
-      return res, j + 1
+      table.insert(res, str:sub(k, j - 1))
+      return table.concat(res), j + 1
     end
 
     j = j + 1
